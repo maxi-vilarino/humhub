@@ -59,10 +59,10 @@ try {
         }
 
         @font-face {
-                font-family: 'Aptos';
-                src: url('<?= $fontsUrl ?>/Aptos.ttf') format('truetype');
-                font-weight: 400;
-            }
+            font-family: 'Aptos';
+            src: url('<?= $fontsUrl ?>/Aptos.ttf') format('truetype');
+            font-weight: 400;
+        }
 
         @font-face {
             font-family: 'Aptos';
@@ -181,9 +181,8 @@ try {
         }
 
         .card-logo img {
-            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4))
-            drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
-    }
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+        }
 
         /* Panel QR */
         .qr-panel {
@@ -309,7 +308,7 @@ try {
             <div class="card-shine"></div>
             <div class="card-header">
                 <div class="card-logo">
-                    <img src="<?= $logoUrl ?>" width="160" height="54" alt="Vegalsa Eroski">
+                    <img src="<?= $logoUrl ?>" width="140" alt="Vegalsa Eroski">
                 </div>
             </div>
 
@@ -342,4 +341,5 @@ try {
         -->
     </div>
 </body>
+
 </html>
