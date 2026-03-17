@@ -7,27 +7,14 @@ $esMovil = (bool) preg_match(
 );
 
 if (!$esMovil) { ?>
-    <!DOCTYPE html>
-    <html lang="es">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Solo disponible en móvil</title>
-    </head>
-
-    <body>
-        <div class="alert alert-warning" style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem; border-radius: 12px;">
-            <i class="fa fa-mobile fa-3x" style="display:block; margin-bottom: 1rem; color: #D42E18;"></i>
-            <strong style="font-size: 1.1rem;">Solo disponible en dispositivos móviles</strong>
-            <p style="margin-top: 0.75rem; color: #555;">
-                Esta página está diseñada para usarse desde tu smartphone.<br>
-                Por favor, accede desde tu dispositivo móvil.
-            </p>
-        </div>
-    </body>
-
-    </html>
+    <div class="alert alert-warning" style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem; border-radius: 12px;">
+        <i class="fa fa-mobile fa-3x" style="display:block; margin-bottom: 1rem; color: #D42E18;"></i>
+        <strong style="font-size: 1.1rem;">Solo disponible en dispositivos m&oacute;viles</strong>
+        <p style="margin-top: 0.75rem; color: #555;">
+            Esta p&aacute;gina est&aacute; dise&ntilde;ada para usarse desde tu smartphone.<br>
+            Por favor, accede desde tu dispositivo m&oacute;vil.
+        </p>
+    </div>
 <?php
     return;
 }
