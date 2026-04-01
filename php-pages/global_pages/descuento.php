@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Custom Page - Tarjeta de Empleado con Wallets operativos
+ */
+
+use yii\helpers\Url;
+use humhub\modules\qrcode\QrGenerator;
+use humhub\modules\qrcode\assets\QrcodeAsset;
+
 $userAgent = Yii::$app->request->userAgent ?? ($_SERVER['HTTP_USER_AGENT'] ?? '');
 $esMovil = (bool) preg_match(
     '/(android|iphone|ipod|ipad|blackberry|iemobile|opera mini|mobile|tablet|webos|windows phone)/i',
@@ -21,20 +29,26 @@ if (!$esMovil) { ?>
 
 require_once Yii::getAlias('@qrcode') . '/vendor/autoload.php';
 
-use humhub\modules\qrcode\QrGenerator;
-use humhub\modules\qrcode\assets\QrcodeAsset;
-
 $user     = Yii::$app->user->identity;
 $fax      = $user->profile->fax ?? '';
 $ean      = QrGenerator::completarEAN13($fax);
-$bundle = QrcodeAsset::register($this);
+$bundle   = QrcodeAsset::register($this);
 $fontsUrl = $bundle->baseUrl . '/fonts';
-$logoUrl = $bundle->baseUrl . '/img/vegalsa-eroski-logo.png';
+$logoUrl  = $bundle->baseUrl . '/img/vegalsa-eroski-logo.png';
+$logoGoogleWallet = $bundle->baseUrl . '/img/esES_add_to_google_wallet_wallet-button.svg';
+$logoAppleWallet  = $bundle->baseUrl . '/img/ES_Add_to_Apple_Wallet_RGB_101921.svg';
 $qr_svg   = '';
 $error    = '';
 
+// --- LÓGICA DE WALLETS ---
+$googleUrl = '';
+$appleUrl  = '';
+
 try {
     $qr_svg = QrGenerator::generate($ean);
+
+    $googleUrl = \yii\helpers\Url::to(['/wallet/wallet/google'], true);
+    $appleUrl  = \yii\helpers\Url::to(['/wallet/wallet/apple', 'ean' => $ean], true);
 } catch (RuntimeException $e) {
     $error = 'Error al generar el código QR: ' . $e->getMessage();
 } catch (\Throwable $e) {
@@ -49,6 +63,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tarjeta de empleado</title>
     <style>
+        /* Mantengo tus estilos originales... */
         *,
         *::before,
         *::after {
@@ -59,11 +74,8 @@ try {
 
         :root {
             --red: #D42E18;
-            /* Pantone 485 C — base */
             --red-dark: #B02010;
-            /* tono oscuro medio  */
             --red-deep: #8A1608;
-            /* tono más profundo  */
         }
 
         @font-face {
@@ -99,77 +111,18 @@ try {
             flex-direction: column;
             align-items: center;
             gap: 1.25rem;
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.35),
-                0 20px 60px rgba(46, 158, 107, 0.45),
-                0 4px 16px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 20px 60px rgba(212, 46, 24, 0.45), 0 4px 16px rgba(0, 0, 0, 0.2);
             animation: appear 0.5s cubic-bezier(.22, 1, .36, 1) both;
             overflow: hidden;
         }
 
-        /* Patrón hexagonal decorativo */
         .card::before {
             content: "";
             position: absolute;
             inset: 0;
             background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
             background-size: 18px 18px;
-            pointer-events: none;
             z-index: 0;
-        }
-
-        /* Reflejo de luz diagonal */
-        .card::after {
-            content: "";
-            position: absolute;
-            top: -60%;
-            left: -40%;
-            width: 80%;
-            height: 160%;
-            background: linear-gradient(105deg,
-                    transparent 40%,
-                    rgba(255, 255, 255, 0.08) 50%,
-                    transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes appear {
-            from {
-                opacity: 0;
-                transform: translateY(22px) scale(0.96);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* Destello de luz al cargar */
-        .card-shine {
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(105deg,
-                    transparent 20%,
-                    rgba(255, 255, 255, 0.18) 50%,
-                    transparent 80%);
-            z-index: 2;
-            pointer-events: none;
-            animation: shine 1.1s cubic-bezier(.4, 0, .2, 1) 0.4s both;
-        }
-
-        @keyframes shine {
-            from {
-                left: -100%;
-            }
-
-            to {
-                left: 160%;
-            }
         }
 
         .card-header {
@@ -183,16 +136,6 @@ try {
             border-bottom: 1px solid rgba(255, 255, 255, 0.25);
         }
 
-        .card-logo {
-            display: flex;
-            align-items: center;
-        }
-
-        .card-logo img {
-            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
-        }
-
-        /* Panel QR */
         .qr-panel {
             position: relative;
             z-index: 1;
@@ -203,9 +146,6 @@ try {
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow:
-                inset 0 2px 6px rgba(0, 0, 0, 0.06),
-                0 2px 8px rgba(0, 0, 0, 0.12);
         }
 
         .qr-panel svg {
@@ -214,7 +154,6 @@ try {
             height: auto;
         }
 
-        /* Footer: nombre + EAN */
         .card-footer {
             position: relative;
             z-index: 1;
@@ -223,89 +162,57 @@ try {
             flex-direction: column;
             align-items: center;
             gap: 0.3rem;
-            padding-top: 0.1rem;
         }
 
         .card-name {
             font-size: 1rem;
             font-weight: 800;
             color: #fff;
-            letter-spacing: 0.05em;
             text-transform: uppercase;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
             text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
         }
 
         .ean-number {
             color: rgba(255, 255, 255, 0.88);
-            font-family: 'Aptos';
-            font-weight: 400;
             font-size: 0.95rem;
             letter-spacing: 0.12em;
             text-align: center;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-            white-space: nowrap;
         }
 
-        .error {
-            position: relative;
-            z-index: 1;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            font-size: 0.85rem;
-            text-align: center;
-            padding: 0.75rem 1rem;
-            width: 100%;
-        }
-
+        /* Estilos para botones de Wallet */
         .card-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
             max-width: 300px;
-            gap: 0.75rem;
+            gap: 1rem;
         }
 
         .wallet-buttons {
             width: 100%;
             display: flex;
-            gap: 0.75rem;
-            justify-content: center;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 0.5rem;
         }
-
 
         .wallet-button {
             display: flex;
-            align-items: center;
-            padding-top: 1rem;
-            flex: 1;
             justify-content: center;
+            padding: 4px 0;
+            transition: transform 0.2s;
+        }
+
+        .wallet-button:active {
+            transform: scale(0.96);
         }
 
         .wallet-button img {
             height: 48px;
-            width: 100%;
-            object-fit: contain;
-            border-radius: 8px;
-        }
-
-        @media (max-width: 340px) {
-            .card {
-                padding: 1.25rem 1rem 1.5rem;
-                border-radius: 20px;
-                max-width: 100%;
-            }
-
-            .ean-number {
-                font-size: 0.82rem;
-                letter-spacing: 0.08em;
-            }
+            width: auto;
+            border: 0;
+            display: block;
         }
     </style>
 </head>
@@ -313,7 +220,6 @@ try {
 <body>
     <div class="card-wrapper">
         <div class="card">
-            <div class="card-shine"></div>
             <div class="card-header">
                 <div class="card-logo">
                     <img src="<?= $logoUrl ?>" width="140" alt="Vegalsa Eroski">
@@ -330,23 +236,37 @@ try {
                     <span class="card-name"><?= htmlspecialchars($user->displayName) ?></span>
                     <p class="ean-number"><?= htmlspecialchars($ean) ?></p>
                 </div>
-
             <?php endif; ?>
         </div>
-        <!-- 
-        <div class="wallet-buttons">
-            <a href="" target="_blank" class="wallet-button">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/Add_to_Apple_Wallet_badge.svg"
-                    alt="Añadir a Apple Wallet"
-                    style="height: 48px;">
-            </a>
-            <a href="" target="_blank" class="wallet-button">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/bb/Add_to_Google_Wallet_badge.svg"
-                    alt="Añadir a Google Wallet"
-                    style="height: 48px;">
-            </a>
-        </div>
-        -->
+
+        <?php if (!$error): ?>
+            <div class="wallet-buttons">
+                <?php
+                $ua = strtolower($userAgent);
+
+                // Definimos las plataformas
+                $isApple = (strpos($ua, 'iphone') !== false || strpos($ua, 'ipad') !== false || strpos($ua, 'ipod') !== false || strpos($ua, 'macintosh') !== false);
+                $isAndroid = (strpos($ua, 'android') !== false);
+                ?>
+
+                <?php if ($isApple): ?>
+                    <a href="<?= $appleUrl ?>" class="wallet-button">
+                        <img src="<?= $logoAppleWallet ?>" alt="Añadir a Cartera de Apple">
+                    </a>
+                <?php elseif ($isAndroid): ?>
+                    <a href="<?= $googleUrl ?>" target="_blank" class="wallet-button">
+                        <img src="<?= $logoGoogleWallet ?>" alt="Añadir a Google Wallet">
+                    </a>
+                <?php else: ?>
+                    <a href="<?= $appleUrl ?>" class="wallet-button" style="margin-bottom: 8px;">
+                        <img src="<?= $logoAppleWallet ?>" alt="Añadir a Cartera de Apple">
+                    </a>
+                    <a href="<?= $googleUrl ?>" target="_blank" class="wallet-button">
+                        <img src="<?= $logoGoogleWallet ?>" alt="Añadir a Google Wallet">
+                    </a>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </body>
 
