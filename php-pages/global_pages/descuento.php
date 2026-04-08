@@ -125,6 +125,61 @@ try {
             z-index: 0;
         }
 
+         /* Reflejo de luz diagonal */
+        .card::after {
+            content: "";
+            position: absolute;
+            top: -60%;
+            left: -40%;
+            width: 80%;
+            height: 160%;
+            background: linear-gradient(105deg,
+                    transparent 40%,
+                    rgba(255, 255, 255, 0.08) 50%,
+                    transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: translateY(22px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Destello de luz al cargar */
+        .card-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(105deg,
+                    transparent 20%,
+                    rgba(255, 255, 255, 0.18) 50%,
+                    transparent 80%);
+            z-index: 2;
+            pointer-events: none;
+            animation: shine 1.1s cubic-bezier(.4, 0, .2, 1) 0.4s both;
+        }
+
+        @keyframes shine {
+            from {
+                left: -100%;
+            }
+
+            to {
+                left: 160%;
+            }
+        }
+
+
         .card-header {
             position: relative;
             z-index: 1;
@@ -135,6 +190,16 @@ try {
             padding-bottom: 0.75rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.25);
         }
+
+         .card-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .card-logo img {
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4))
+            drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+        }    
 
         .qr-panel {
             position: relative;
@@ -177,6 +242,18 @@ try {
             font-size: 0.95rem;
             letter-spacing: 0.12em;
             text-align: center;
+        }
+
+        .error {
+            position: relative;
+            z-index: 1;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 0.75rem 1rem;
+            width: 100%;
         }
 
         /* Estilos para botones de Wallet */
