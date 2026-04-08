@@ -47,8 +47,13 @@ $appleUrl  = '';
 try {
     $qr_svg = QrGenerator::generate($ean);
 
-    $googleUrl = \yii\helpers\Url::to(['/wallet/wallet/google'], true);
-    $appleUrl  = \yii\helpers\Url::to(['/wallet/wallet/apple', 'ean' => $ean], true);
+    [, $publishedUrl] = Yii::$app->assetManager->publish(
+    Yii::getAlias('@wallet/resources/vegalsa')
+    );
+    $logoUrlWallet   = Yii::$app->urlManager->getHostInfo() . $publishedUrl . '/logo_v3.png';
+    $googleUrl = (new \humhub\modules\wallet\models\GoogleWalletPass())
+                    ->createSaveUrl($user->id, $user->displayName, $ean, $logoUrlWallet);
+    $appleUrl  = \yii\helpers\Url::to(['/wallet/wallet/apple'], true);
 } catch (RuntimeException $e) {
     $error = 'Error al generar el código QR: ' . $e->getMessage();
 } catch (\Throwable $e) {
