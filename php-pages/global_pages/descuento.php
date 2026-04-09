@@ -14,18 +14,7 @@ $esMovil = (bool) preg_match(
     $userAgent
 );
 
-if (!$esMovil) { ?>
-    <div class="alert alert-warning" style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem; border-radius: 12px;">
-        <i class="fa fa-mobile fa-3x" style="display:block; margin-bottom: 1rem; color: #D42E18;"></i>
-        <strong style="font-size: 1.1rem;">Solo disponible en dispositivos m&oacute;viles</strong>
-        <p style="margin-top: 0.75rem; color: #555;">
-            Esta p&aacute;gina est&aacute; dise&ntilde;ada para usarse desde tu smartphone.<br>
-            Por favor, accede desde tu dispositivo m&oacute;vil.
-        </p>
-    </div>
-<?php
-    return;
-}
+
 
 require_once Yii::getAlias('@qrcode') . '/vendor/autoload.php';
 
@@ -53,7 +42,27 @@ try {
     $logoUrlWallet   = Yii::$app->urlManager->getHostInfo() . $publishedUrl . '/logo_v3.png';
     $googleUrl = (new \humhub\modules\wallet\models\GoogleWalletPass())
                     ->createSaveUrl($user->id, $user->displayName, $ean, $logoUrlWallet);
-    $appleUrl  = \yii\helpers\Url::to(['/wallet/wallet/apple'], true);
+    
+    // Apple Wallet — genera .pkpass y token aquí mismo (sesión activa)
+    $applePass = new \humhub\modules\wallet\models\AppleWalletPass();
+    $pkpassContent = $applePass->createPass($user->id, $user->displayName, $ean);
+
+    if ($pkpassContent) {
+        $token  = Yii::$app->security->generateRandomString(32);
+        $dir    = Yii::getAlias('@runtime/wallet');
+        if (!is_dir($dir)) mkdir($dir, 0750, true);
+
+        file_put_contents("{$dir}/{$token}.pkpass", $pkpassContent);
+        file_put_contents("{$dir}/{$token}.json", json_encode([
+            'expires' => time() + 300,
+            'userId'  => $user->id,
+        ]));
+
+        $appleUrl = \yii\helpers\Url::to(
+            ['/wallet/wallet/apple-serve', 'token' => $token], true
+        );
+    }
+    
 } catch (RuntimeException $e) {
     $error = 'Error al generar el código QR: ' . $e->getMessage();
 } catch (\Throwable $e) {
@@ -332,7 +341,7 @@ try {
                 ?>
 
                 <?php if ($isApple): ?>
-                    <a href="<?= $appleUrl ?>" class="wallet-button">
+                    <a href="<?= $appleUrl ?>" data-pjax="0" class="wallet-button">
                         <img src="<?= $logoAppleWallet ?>" alt="Añadir a Cartera de Apple">
                     </a>
                 <?php elseif ($isAndroid): ?>
